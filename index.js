@@ -1,11 +1,14 @@
 const express = require('express')
-
 const app = express()
-
 app.use(express.json()) // THIS IS NEEDED FOR POSTs!!!
+
 const morgan = require("morgan") // https://github.com/expressjs/morgan see "examples" section
 const logger = morgan(":method :url :status :res[content-length] - :response-time ms") // https://github.com/expressjs/morgan see "examples" section. "tiny" logs only a "tiny" amount of stuff, "combined" logs a lot more! c:
 app.use(logger) // https://github.com/expressjs/morgan see "examples" section
+
+const logger_for_POST = morgan(":post_body", {skip: function (req, res) { return req.method !== "POST" }}) // https://github.com/expressjs/morgan see "examples" section. "tiny" logs only a "tiny" amount of stuff, "combined" logs a lot more! This "skip" is now skipping this logger in case the method is NOT "POST", so only POST will use this logger.
+morgan.token('post_body', () => "") // empty default; the actual body content from POST is only filled in POST
+app.use(logger_for_POST) // https://github.com/expressjs/morgan see "examples" section
 
 let persons = [
     { 
@@ -80,8 +83,7 @@ const generateId = () => { // this is not anything smart! In reality, AT LEAST l
   return random_id
 }
 
-const logger_for_POST = morgan(":post_body") // https://github.com/expressjs/morgan see "examples" section. "tiny" logs only a "tiny" amount of stuff, "combined" logs a lot more! c:
-app.use(logger_for_POST) // https://github.com/expressjs/morgan see "examples" section
+
 
 app.post('/api/persons/', (request, response) => { // NB! app.use(express.json()) IS NEEDED FOR POSTs!!! This is written on top c:
   const body = request.body
